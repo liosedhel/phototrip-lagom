@@ -6,6 +6,7 @@ import akka.Done
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
 import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventTag, PersistentEntity}
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
+import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
 import play.api.libs.json.{Format, Json}
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters._
@@ -14,7 +15,7 @@ import WorldMapCommands._
 import WorldMapEvents._
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel
 
-class WorldMapAggregate extends PersistentEntity {
+class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {
 
   override type Command = WorldMapCommand[_]
   override type Event   = WorldMapEvent
@@ -55,6 +56,12 @@ class WorldMapAggregate extends PersistentEntity {
             ctx.thenPersist(
               PlaceAdded(id, coordinates, photoLinks)
             ) { _ =>
+
+              //send added place to internal topic
+              val place = Place(coordinates, photoLinks)
+              val topic = pubSubRegistry.refFor(TopicId[Place](entityId))
+              topic.publish(place)
+
               ctx.reply(Done)
             }
         }

@@ -7,6 +7,7 @@ import com.lightbend.lagom.scaladsl.server._
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import play.api.libs.ws.ahc.AhcWSComponents
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
+import com.lightbend.lagom.scaladsl.pubsub.PubSubComponents
 import com.softwaremill.macwire._
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapService
@@ -28,6 +29,7 @@ abstract class WorldMapApplication(context: LagomApplicationContext)
   extends LagomApplication(context)
     with CassandraPersistenceComponents
     with LagomKafkaComponents
+    with PubSubComponents
     with AhcWSComponents {
 
   // Bind the service that this server provides

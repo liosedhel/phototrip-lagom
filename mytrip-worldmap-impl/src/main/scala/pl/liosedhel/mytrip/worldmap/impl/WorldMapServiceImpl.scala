@@ -1,16 +1,19 @@
 package pl.liosedhel.mytrip.worldmap.impl
 
 import scala.collection.immutable
+import scala.concurrent.Future
 
 import akka.persistence.query.Offset
+import akka.stream.scaladsl.Source
 import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.cassandra.{CassandraReadSide, CassandraSession}
 import com.lightbend.lagom.scaladsl.persistence.{EventStreamElement, PersistentEntityRegistry, ReadSide}
+import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
 
-import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{NewWorldMap, WorldMap}
+import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{NewWorldMap, Place, WorldMap}
 import pl.liosedhel.mytrip.worldmap.api.{WorldMapApiEvents, WorldMapApiModel, WorldMapService}
 import pl.liosedhel.mytrip.worldmap.impl.WorldMapCommands.{AddPlace, CreateNewMap, GetWorldMap}
 import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents.{PlaceAdded, WorldMapCreated, WorldMapEvent}
@@ -18,12 +21,13 @@ import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents.{PlaceAdded, WorldMapCre
 class WorldMapServiceImpl(
   persistentEntityRegistry: PersistentEntityRegistry,
   cassandraReadSide: CassandraReadSide,
+  pubSub: PubSubRegistry,
   readSide: ReadSide,
   cassandraSession: CassandraSession,
   worldMapsRepository: WorldMapsRepository
 ) extends WorldMapService {
 
-  readSide.register[WorldMapEvents.WorldMapEvent](new WorldMapEventProcessor(cassandraReadSide, cassandraSession))
+  readSide.register[WorldMapEvents.WorldMapEvent](new WorldMapEventProcessor(cassandraReadSide, cassandraSession, worldMapsRepository))
 
   override def worldMap(id: String): ServiceCall[NotUsed, WorldMap] = ServiceCall { _ =>
     val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](id)
@@ -74,5 +78,13 @@ class WorldMapServiceImpl(
   override def addPlace(id: String): ServiceCall[WorldMapApiModel.Place, Done] = ServiceCall { place =>
     val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](id)
     worldMapAggregate.ask(AddPlace(place.coordinates, place.photoLinks))
+  }
+
+  override def placeAdded(mapId: String): ServiceCall[
+    NotUsed,
+    Source[WorldMapApiModel.Place, NotUsed]
+  ] = ServiceCall { _ =>
+    val topic = pubSub.refFor(TopicId[Place](mapId))
+    Future.successful(topic.subscriber)
   }
 }

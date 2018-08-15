@@ -1,5 +1,6 @@
 package pl.liosedhel.mytrip.worldmap.api
 
+import akka.stream.scaladsl.Source
 import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
@@ -25,7 +26,9 @@ trait WorldMapService extends Service {
 
   def addPlace(id: String): ServiceCall[Place, Done]
 
-  //topics
+  def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]]
+
+  //topics available externally
   def worldMapCreatedTopic(): Topic[WorldMapCreated]
 
   def placeAddedTopic(): Topic[PlaceAdded]
@@ -37,7 +40,8 @@ trait WorldMapService extends Service {
         pathCall("/api/world-map/:id", worldMap _),
         pathCall("/api/world-map/:id", createWorldMap _),
         pathCall("/api/world-map/:id/place", addPlace _),
-        pathCall("/api/world-map/list/available", availableMaps _)
+        pathCall("/api/world-map/list/available", availableMaps _),
+        pathCall("/api/world-map/:id/stream/place", placeAdded _)
       )
       .withTopics(
         topic(WorldMapService.WORLD_MAP_CREATED, worldMapCreatedTopic())

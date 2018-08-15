@@ -1,5 +1,6 @@
 package pl.liosedhel.mytrip.worldmapstream.impl
 
+import java.util.UUID
 import scala.concurrent.Future
 
 import akka.NotUsed
@@ -11,14 +12,12 @@ import pl.liosedhel.mytrip.worldmap.api.WorldMapService
 import pl.liosedhel.mytrip.worldmapstream.api.WorldMapStreamService
 
 class WorldMapStreamServiceImpl(worldMapService: WorldMapService) extends WorldMapStreamService {
-  override def newPlacesOnMap(mapId: String): ServiceCall[Source[String, NotUsed], Source[PlaceAdded, NotUsed]] =
-    ServiceCall[Source[String, NotUsed], Source[PlaceAdded, NotUsed]] { _ =>
+  override def newPlacesOnMap: ServiceCall[NotUsed, Source[PlaceAdded, NotUsed]] =
+    ServiceCall[NotUsed, Source[PlaceAdded, NotUsed]] { _ =>
       Future.successful(
         worldMapService
-          .placeAddedTopic()
-          .subscribe
+          .placeAddedTopic().subscribe//.withGroupId(UUID.randomUUID().toString)
           .atMostOnceSource
-          .filter(_.worldMapId == mapId)
           .mapMaterializedValue(_ => NotUsed)
       )
     }

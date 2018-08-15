@@ -10,14 +10,14 @@ trait WorldMapStreamService extends Service {
 
   import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters._
 
-  def newPlacesOnMap(mapId: String): ServiceCall[Source[String, NotUsed], Source[PlaceAdded, NotUsed]]
+  def newPlacesOnMap: ServiceCall[NotUsed, Source[PlaceAdded, NotUsed]]
 
   override final def descriptor = {
     import Service._
 
     named("mytrip-worldmapstream")
       .withCalls(
-        namedCall("api/worldmapstream/:id/stream", newPlacesOnMap _)
+        pathCall("/api/worldmapstream/places/stream", newPlacesOnMap)
       ).withAutoAcl(true)
   }
 }
