@@ -24,7 +24,9 @@ trait WorldMapService extends Service {
 
   def availableMaps(): ServiceCall[NotUsed, AvailableMaps]
 
-  def addPlace(id: String): ServiceCall[Place, Done]
+  def addPlace(mapId: String): ServiceCall[Place, Done]
+
+  def addLink(mapId: String, placeId: String): ServiceCall[Url, Done]
 
   def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]]
 
@@ -41,7 +43,8 @@ trait WorldMapService extends Service {
         pathCall("/api/world-map/:id", createWorldMap _),
         pathCall("/api/world-map/:id/place", addPlace _),
         pathCall("/api/world-map/list/available", availableMaps _),
-        pathCall("/api/world-map/:id/stream/place", placeAdded _)
+        pathCall("/api/world-map/:id/stream/place", placeAdded _),
+        pathCall("/api/world-map/:id/place/:id/link", addLink _)
       )
       .withTopics(
         topic(WorldMapService.WORLD_MAP_CREATED, worldMapCreatedTopic())
@@ -72,8 +75,8 @@ trait WorldMapService extends Service {
 object WorldMapApiModel {
   case class Url(url: String) extends AnyVal
   case class Coordinates(latitude: String, longitude: String)
-  case class Place(coordinates: Coordinates, photoLinks: Set[Url])
-  case class WorldMap(id: String, creatorId: String, places: List[Place])
+  case class Place(id: String, coordinates: Coordinates, photoLinks: Set[Url])
+  case class WorldMap(id: String, creatorId: String, places: Set[Place])
 
   case class AvailableMaps(maps: Seq[String])
   case class NewWorldMap(creatorId: String)

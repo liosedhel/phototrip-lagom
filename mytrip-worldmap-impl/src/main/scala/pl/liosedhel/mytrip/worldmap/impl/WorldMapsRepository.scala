@@ -1,11 +1,10 @@
 package pl.liosedhel.mytrip.worldmap.impl
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 import akka.Done
 import com.datastax.driver.core.{BoundStatement, PreparedStatement}
-import com.lightbend.lagom.scaladsl.persistence.EventStreamElement
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.AvailableMaps

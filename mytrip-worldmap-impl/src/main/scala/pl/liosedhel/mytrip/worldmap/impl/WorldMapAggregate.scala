@@ -10,10 +10,10 @@ import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
 import play.api.libs.json.{Format, Json}
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters._
-import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel._
-import WorldMapCommands._
-import WorldMapEvents._
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel
+import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel._
+import pl.liosedhel.mytrip.worldmap.impl.WorldMapCommands._
+import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents._
 
 class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {
 
@@ -23,10 +23,10 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
   //this should be mapped to some internal state, API domain object used directly for the sake of simplicity
   override type State = WorldMapApiModel.WorldMap
 
-  override def initialState: WorldMap = WorldMap("", "", Nil)
+  override def initialState: WorldMap = WorldMap("", "", Set.empty)
 
   override def behavior: Behavior = {
-    case WorldMap("", "", Nil) =>
+    case WorldMap("", "", _) =>
       Actions()
         .onCommand[CreateNewMap, Done] {
           case (CreateNewMap(id, creatorId), ctx, _) =>
@@ -42,26 +42,36 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
         }
         .onEvent {
           case (WorldMapCreated(id, creatorId), _) =>
-            WorldMap(id, creatorId, Nil)
+            WorldMap(id, creatorId, Set.empty)
         }
 
-    case WorldMap(id, creatorId, places) =>
+    case WorldMap(mapId, creatorId, places) =>
       Actions()
         .onReadOnlyCommand[CreateNewMap, Done] {
           case (_: CreateNewMap, ctx, _) =>
-            ctx.invalidCommand(s"Map with ID: $id was already created.")
+            ctx.invalidCommand(s"Map with ID: $mapId was already created.")
         }
         .onCommand[AddPlace, Done] {
-          case (AddPlace(coordinates, photoLinks), ctx, _) =>
+          case (AddPlace(placeId, coordinates, photoLinks), ctx, _) =>
             ctx.thenPersist(
-              PlaceAdded(id, coordinates, photoLinks)
+              PlaceAdded(mapId, placeId, coordinates, photoLinks)
             ) { _ =>
-
               //send added place to internal topic
-              val place = Place(coordinates, photoLinks)
-              val topic = pubSubRegistry.refFor(TopicId[Place](entityId))
+              val place = Place(placeId, coordinates, photoLinks)
+              val topic = pubSubRegistry.refFor(TopicId[Place](mapId))
               topic.publish(place)
 
+              ctx.reply(Done)
+            }
+        }
+        .onCommand[AddLink, Done] {
+          case (a: AddLink, ctx, _) if !places.exists(_.id == a.placeId) =>
+            ctx.invalidCommand(s"There is no place with id: ${a.placeId}")
+            ctx.done
+          case (AddLink(placeId, link), ctx, _) =>
+            ctx.thenPersist(
+              LinkAdded(mapId, placeId, link)
+            ) { _ =>
               ctx.reply(Done)
             }
         }
@@ -70,17 +80,24 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
             ctx.reply(worldMap)
         }
         .onEvent {
-          case (PlaceAdded(_, coordinates, photoLinks), _) =>
-            WorldMap(id, creatorId, places :+ Place(coordinates, photoLinks))
+          case (PlaceAdded(_, placeId, coordinates, photoLinks), _) =>
+            WorldMap(mapId, creatorId, places + Place(placeId, coordinates, photoLinks))
+        }
+        .onEvent {
+          case (LinkAdded(_, placeId, url), currentState) =>
+            val updatedPlace =
+              places.find(_.id == placeId).map(place => place.copy(photoLinks = place.photoLinks + url))
+            currentState.copy(places = places.filter(_.id != placeId) ++ updatedPlace.toSet)
         }
   }
 }
 
 object WorldMapCommands {
-  sealed trait WorldMapCommand[R]                                     extends ReplyType[R]
-  case class CreateNewMap(id: String, creatorId: String)              extends WorldMapCommand[Done]
-  case class AddPlace(coordinates: Coordinates, photoLinks: Set[Url]) extends WorldMapCommand[Done]
-  case class GetWorldMap(id: String)                                  extends WorldMapCommand[WorldMapApiModel.WorldMap]
+  sealed trait WorldMapCommand[R]                                                 extends ReplyType[R]
+  case class CreateNewMap(id: String, creatorId: String)                          extends WorldMapCommand[Done]
+  case class AddPlace(id: String, coordinates: Coordinates, photoLinks: Set[Url]) extends WorldMapCommand[Done]
+  case class AddLink(placeId: String, url: Url)                                   extends WorldMapCommand[Done]
+  case class GetWorldMap(id: String)                                              extends WorldMapCommand[WorldMapApiModel.WorldMap]
 }
 
 object WorldMapEvents {
@@ -91,8 +108,10 @@ object WorldMapEvents {
     def aggregateTag = WorldMapEvent.Tag
   }
 
-  case class WorldMapCreated(id: String, creatorId: String)                                 extends WorldMapEvent
-  case class PlaceAdded(worldMapId: String, coordinates: Coordinates, photoLinks: Set[Url]) extends WorldMapEvent
+  case class WorldMapCreated(id: String, creatorId: String) extends WorldMapEvent
+  case class PlaceAdded(worldMapId: String, placeId: String, coordinates: Coordinates, photoLinks: Set[Url])
+    extends WorldMapEvent
+  case class LinkAdded(worldMapId: String, placeId: String, url: Url) extends WorldMapEvent
 }
 
 object WorldMapSerializerRegistry extends JsonSerializerRegistry {
