@@ -38,10 +38,10 @@ class WorldMapServiceImpl(
       worldMapAggregate.ask(GetWorldMap(id))
     }
 
-  override def createWorldMap(id: String): ServiceCall[NewWorldMap, Done] =
+  override def createWorldMap(): ServiceCall[NewWorldMap, Done] =
     ServiceCall[NewWorldMap, Done] { worldMap =>
-      val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](id)
-      worldMapAggregate.ask(CreateNewMap(id, worldMap.creatorId))
+      val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](worldMap.id)
+      worldMapAggregate.ask(CreateNewMap(worldMap.id, worldMap.creatorId))
     }
 
   override def worldMapCreatedTopic(): Topic[WorldMapApiEvents.WorldMapCreated] = {
@@ -77,21 +77,19 @@ class WorldMapServiceImpl(
   }
 
   override def availableMaps(): ServiceCall[NotUsed, WorldMapApiModel.AvailableMaps] =
-    ServiceCall { _ =>
-      worldMapsRepository.availableMaps()
+    ServiceCall { _ => worldMapsRepository.availableMaps()
     }
 
   override def addPlace(mapId: String): ServiceCall[WorldMapApiModel.Place, Done] =
     ServiceCall { place =>
       val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](mapId)
-      worldMapAggregate.ask(AddPlace(place.id, place.coordinates, place.photoLinks))
+      worldMapAggregate.ask(AddPlace(place.id, place.description, place.coordinates, place.photoLinks))
     }
 
   override def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]] =
     ServiceCall { _ =>
       val topic = pubSub.refFor(TopicId[Place](mapId))
-      val subscriber: Source[Place, NotUsed] = topic.subscriber
-      Future.successful(subscriber)
+      Future.successful(topic.subscriber)
     }
 
   override def addLink(mapId: String, placeId: String): ServiceCall[WorldMapApiModel.Url, Done] =

@@ -32,8 +32,7 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
           case (CreateNewMap(id, creatorId), ctx, _) =>
             ctx.thenPersist(
               WorldMapCreated(id, creatorId)
-            ) { _ =>
-              ctx.reply(Done)
+            ) { _ => ctx.reply(Done)
             }
         }
         .onReadOnlyCommand[GetWorldMap, WorldMap] {
@@ -52,12 +51,12 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
             ctx.invalidCommand(s"Map with ID: $mapId was already created.")
         }
         .onCommand[AddPlace, Done] {
-          case (AddPlace(placeId, coordinates, photoLinks), ctx, _) =>
+          case (AddPlace(placeId, description, coordinates, photoLinks), ctx, _) =>
             ctx.thenPersist(
-              PlaceAdded(mapId, placeId, coordinates, photoLinks)
+              PlaceAdded(mapId, placeId, description, coordinates, photoLinks)
             ) { _ =>
               //send added place to internal topic
-              val place = Place(placeId, coordinates, photoLinks)
+              val place = Place(placeId, description, coordinates, photoLinks)
               val topic = pubSubRegistry.refFor(TopicId[Place](mapId))
               topic.publish(place)
 
@@ -71,8 +70,7 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
           case (AddLink(placeId, link), ctx, _) =>
             ctx.thenPersist(
               LinkAdded(mapId, placeId, link)
-            ) { _ =>
-              ctx.reply(Done)
+            ) { _ => ctx.reply(Done)
             }
         }
         .onReadOnlyCommand[GetWorldMap, WorldMap] {
@@ -80,8 +78,8 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
             ctx.reply(worldMap)
         }
         .onEvent {
-          case (PlaceAdded(_, placeId, coordinates, photoLinks), _) =>
-            WorldMap(mapId, creatorId, places + Place(placeId, coordinates, photoLinks))
+          case (PlaceAdded(_, placeId, description, coordinates, photoLinks), _) =>
+            WorldMap(mapId, creatorId, places + Place(placeId, description, coordinates, photoLinks))
         }
         .onEvent {
           case (LinkAdded(_, placeId, url), currentState) =>
@@ -93,11 +91,12 @@ class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity
 }
 
 object WorldMapCommands {
-  sealed trait WorldMapCommand[R]                                                 extends ReplyType[R]
-  case class CreateNewMap(id: String, creatorId: String)                          extends WorldMapCommand[Done]
-  case class AddPlace(id: String, coordinates: Coordinates, photoLinks: Set[Url]) extends WorldMapCommand[Done]
-  case class AddLink(placeId: String, url: Url)                                   extends WorldMapCommand[Done]
-  case class GetWorldMap(id: String)                                              extends WorldMapCommand[WorldMapApiModel.WorldMap]
+  sealed trait WorldMapCommand[R]                        extends ReplyType[R]
+  case class CreateNewMap(id: String, creatorId: String) extends WorldMapCommand[Done]
+  case class AddPlace(id: String, description: String, coordinates: Coordinates, photoLinks: Set[Url])
+    extends WorldMapCommand[Done]
+  case class AddLink(placeId: String, url: Url) extends WorldMapCommand[Done]
+  case class GetWorldMap(id: String)            extends WorldMapCommand[WorldMapApiModel.WorldMap]
 }
 
 object WorldMapEvents {
@@ -109,8 +108,13 @@ object WorldMapEvents {
   }
 
   case class WorldMapCreated(id: String, creatorId: String) extends WorldMapEvent
-  case class PlaceAdded(worldMapId: String, placeId: String, coordinates: Coordinates, photoLinks: Set[Url])
-    extends WorldMapEvent
+  case class PlaceAdded(
+    worldMapId: String,
+    placeId: String,
+    description: String,
+    coordinates: Coordinates,
+    photoLinks: Set[Url]
+  ) extends WorldMapEvent
   case class LinkAdded(worldMapId: String, placeId: String, url: Url) extends WorldMapEvent
 }
 
