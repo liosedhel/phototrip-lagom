@@ -84,7 +84,7 @@ object WorldMapApiModel {
 
 object WorldMapApiEvents {
   case class WorldMapCreated(id: String, creatorId: String)
-  case class PlaceAdded(worldMapId: String, coordinates: Coordinates, photoLinks: Set[Url])
+  case class PlaceAdded(placeId: String, worldMapId: String, coordinates: Coordinates, photoLinks: Set[Url])
 }
 
 object WorldMapApiFormatters {

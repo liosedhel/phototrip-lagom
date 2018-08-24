@@ -29,7 +29,7 @@ class WorldMapServiceImpl(
 
   //register event processor
   readSide.register[WorldMapEvents.WorldMapEvent](
-    new WorldMapEventProcessor(cassandraReadSide, cassandraSession, worldMapsRepository)
+    new WorldMapEventProcessor(cassandraReadSide, worldMapsRepository)
   )
 
   override def worldMap(id: String): ServiceCall[NotUsed, WorldMap] =
@@ -72,7 +72,7 @@ class WorldMapServiceImpl(
     ev: EventStreamElement[WorldMapEvent]
   ): immutable.Seq[(WorldMapApiEvents.PlaceAdded, Offset)] = ev match {
     case EventStreamElement(_, p: PlaceAdded, offset) =>
-      immutable.Seq((WorldMapApiEvents.PlaceAdded(p.worldMapId, p.coordinates, p.photoLinks), offset))
+      immutable.Seq((WorldMapApiEvents.PlaceAdded(p.placeId, p.worldMapId, p.coordinates, p.photoLinks), offset))
     case _ => Nil
   }
 
@@ -90,7 +90,8 @@ class WorldMapServiceImpl(
   override def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]] =
     ServiceCall { _ =>
       val topic = pubSub.refFor(TopicId[Place](mapId))
-      Future.successful(topic.subscriber)
+      val subscriber: Source[Place, NotUsed] = topic.subscriber
+      Future.successful(subscriber)
     }
 
   override def addLink(mapId: String, placeId: String): ServiceCall[WorldMapApiModel.Url, Done] =

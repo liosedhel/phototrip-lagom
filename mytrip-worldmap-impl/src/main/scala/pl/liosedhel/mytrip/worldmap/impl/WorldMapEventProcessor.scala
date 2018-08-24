@@ -7,7 +7,6 @@ import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents.{WorldMapCreated, WorldM
 
 class WorldMapEventProcessor(
   readSide: CassandraReadSide,
-  session: CassandraSession,
   worldMapsRepository: WorldMapsRepository
 ) extends ReadSideProcessor[WorldMapEvent] {
 
@@ -15,10 +14,12 @@ class WorldMapEventProcessor(
     val builder = readSide.builder[WorldMapEvent]("worldmaps")
     builder
       .setGlobalPrepare(() => worldMapsRepository.createWorldMapsTable())
-      .setEventHandler[WorldMapCreated](eventStreamElement => worldMapsRepository.saveMap(eventStreamElement.event))
+      .setEventHandler[WorldMapCreated](
+        eventStreamElement => worldMapsRepository.saveMap(eventStreamElement.event)
+      )
       .build()
   }
 
-  override def aggregateTags: Set[AggregateEventTag[WorldMapEvent]] = Set(WorldMapEvent.Tag)
+  override def aggregateTags = Set(WorldMapEvent.Tag)
 
 }

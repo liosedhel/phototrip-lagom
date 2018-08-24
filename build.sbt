@@ -37,7 +37,7 @@ lazy val `mytrip-worldmapstream-api` = (project in file("mytrip-worldmapstream-a
     libraryDependencies ++= Seq(
       lagomScaladslApi
     )
-  ).dependsOn(`mytrip-worldmap-api`)
+  )
 
 lazy val `mytrip-worldmapstream-impl` = (project in file("mytrip-worldmapstream-impl"))
   .enablePlugins(LagomScala)
