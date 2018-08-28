@@ -3,7 +3,8 @@ package pl.liosedhel.mytrip.user.api
 import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
-import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceCall}
+import com.lightbend.lagom.scaladsl.api.transport.Method
+import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
 import play.api.libs.json.{Format, Json}
 
 import pl.liosedhel.mytrip.user.api.UserApiEvents.UserCreated
@@ -44,6 +45,9 @@ trait UserService extends Service {
           )
       )
       .withAutoAcl(true)
+      .withAcls(
+        ServiceAcl.forMethodAndPathRegex(Method.OPTIONS, "/api.*")
+      )
   }
 }
 
