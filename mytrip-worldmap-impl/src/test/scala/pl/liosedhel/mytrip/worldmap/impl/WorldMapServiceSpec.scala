@@ -7,7 +7,6 @@ import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel._
 import pl.liosedhel.mytrip.worldmap.api.WorldMapService
-
 class WorldMapServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
 
   private val server = ServiceTest.startServer(
