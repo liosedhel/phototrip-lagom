@@ -9,6 +9,8 @@ import play.api.libs.ws.ahc.AhcWSComponents
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 import com.lightbend.lagom.scaladsl.pubsub.PubSubComponents
 import com.softwaremill.macwire._
+import play.api.mvc.EssentialFilter
+import play.filters.cors.CORSComponents
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapService
 
@@ -30,7 +32,10 @@ abstract class WorldMapApplication(context: LagomApplicationContext)
     with CassandraPersistenceComponents
     with LagomKafkaComponents
     with PubSubComponents
-    with AhcWSComponents {
+    with AhcWSComponents
+    with CORSComponents {
+
+  override val httpFilters: Seq[EssentialFilter] = Seq(corsFilter)
 
   // Bind the service that this server provides
   override lazy val lagomServer = serverFor[WorldMapService]({

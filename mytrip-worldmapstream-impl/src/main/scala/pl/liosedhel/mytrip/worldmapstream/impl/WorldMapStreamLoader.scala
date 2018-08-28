@@ -10,6 +10,8 @@ import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegi
 import com.lightbend.lagom.scaladsl.server._
 import com.softwaremill.macwire._
 import play.api.libs.ws.ahc.AhcWSComponents
+import play.api.mvc.EssentialFilter
+import play.filters.cors.CORSComponents
 
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiEvents.PlaceAdded
 import pl.liosedhel.mytrip.worldmap.api.{WorldMapApiFormatters, WorldMapService}
@@ -30,7 +32,12 @@ class WorldMapStreamLoader extends LagomApplicationLoader {
 
 abstract class MyTripStreamApplication(context: LagomApplicationContext)
   extends LagomApplication(context)
-  with AhcWSComponents with LagomKafkaComponents with CassandraPersistenceComponents {
+  with AhcWSComponents
+  with LagomKafkaComponents
+  with CassandraPersistenceComponents
+  with CORSComponents {
+
+  override val httpFilters: Seq[EssentialFilter] = Seq(corsFilter)
 
   lazy val worldMapService = serviceClient.implement[WorldMapService]
 
@@ -41,9 +48,8 @@ abstract class MyTripStreamApplication(context: LagomApplicationContext)
     import WorldMapApiFormatters._
     override def serializers: immutable.Seq[
       JsonSerializer[_]
-    ] = {
+    ] =
       immutable.Seq(JsonSerializer[PlaceAdded])
-    }
   }
 
 }
