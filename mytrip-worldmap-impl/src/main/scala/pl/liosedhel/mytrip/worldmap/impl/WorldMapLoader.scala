@@ -40,6 +40,7 @@ abstract class WorldMapApplication(context: LagomApplicationContext)
   // Bind the service that this server provides
   override lazy val lagomServer = serverFor[WorldMapService]({
     val worldMapsRepository = wire[WorldMapsRepository]
+    val placesRepository = wire[PlacesRepository]
     wire[WorldMapServiceImpl]
   })
 
@@ -48,4 +49,6 @@ abstract class WorldMapApplication(context: LagomApplicationContext)
 
   // Register world map aggregate
   persistentEntityRegistry.register(wire[WorldMapAggregate])
+
+  persistentEntityRegistry.register(wire[PlaceAggregate])
 }

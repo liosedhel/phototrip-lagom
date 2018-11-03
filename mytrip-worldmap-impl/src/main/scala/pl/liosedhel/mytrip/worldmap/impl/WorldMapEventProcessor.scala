@@ -1,9 +1,8 @@
 package pl.liosedhel.mytrip.worldmap.impl
 
-import com.lightbend.lagom.scaladsl.persistence.cassandra.{CassandraReadSide, CassandraSession}
-import com.lightbend.lagom.scaladsl.persistence.{AggregateEventTag, ReadSideProcessor}
-
-import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents.{WorldMapCreated, WorldMapEvent}
+import com.lightbend.lagom.scaladsl.persistence.ReadSideProcessor
+import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraReadSide
+import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate._
 
 class WorldMapEventProcessor(
   readSide: CassandraReadSide,

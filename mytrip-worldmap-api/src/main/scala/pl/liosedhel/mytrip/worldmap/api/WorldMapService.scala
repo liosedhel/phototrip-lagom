@@ -6,11 +6,10 @@ import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
-import play.api.libs.json.{Format, Json}
-
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiEvents.{PlaceAdded, WorldMapCreated}
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters._
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel._
+import play.api.libs.json._
 
 object WorldMapService {
   val WORLD_MAP_CREATED = "world-map-created"
@@ -19,33 +18,33 @@ object WorldMapService {
 
 trait WorldMapService extends Service {
 
-  def worldMap(id: String): ServiceCall[NotUsed, WorldMap]
+  def worldMap(mapId: String): ServiceCall[NotUsed, WorldMap]
 
   def createWorldMap(): ServiceCall[NewWorldMap, Done]
 
   def availableMaps(): ServiceCall[NotUsed, AvailableMaps]
 
-  def addPlace(mapId: String): ServiceCall[Place, Done]
+  def createPlace(mapId: String): ServiceCall[Place, Done]
 
-  def addLink(mapId: String, placeId: String): ServiceCall[Url, Done]
+  def addLink(placeId: String): ServiceCall[Url, Done]
 
   def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]]
 
   //topics available externally
   def worldMapCreatedTopic(): Topic[WorldMapCreated]
 
-  def placeAddedTopic(): Topic[PlaceAdded]
+  def placeCreatedTopic(): Topic[PlaceAdded]
 
   override def descriptor: Descriptor = {
     import Service._
     named("worldmap")
       .withCalls(
-        pathCall("/api/world-map/:id", worldMap _),
-        pathCall("/api/world-map", createWorldMap _),
-        pathCall("/api/world-map/:id/place", addPlace _),
-        pathCall("/api/world-map/list/available", availableMaps _),
-        pathCall("/api/world-map/:id/stream/place", placeAdded _),
-        pathCall("/api/world-map/:id/place/:id/link", addLink _)
+        pathCall("/api/world-map/map/:id", worldMap _),
+        pathCall("/api/world-map/map", createWorldMap _),
+        pathCall("/api/world-map/map/:id/place", createPlace _),
+        pathCall("/api/world-map/map/list/available", availableMaps _),
+        pathCall("/api/world-map/map/:id/stream/places", placeAdded _),
+        pathCall("/api/world-map/place/:id/link", addLink _)
       )
       .withTopics(
         topic(WorldMapService.WORLD_MAP_CREATED, worldMapCreatedTopic())
@@ -58,7 +57,7 @@ trait WorldMapService extends Service {
             KafkaProperties.partitionKeyStrategy,
             PartitionKeyStrategy[WorldMapCreated](_.id)
           ),
-        topic(WorldMapService.PLACE_ADDED, placeAddedTopic())
+        topic(WorldMapService.PLACE_ADDED, placeCreatedTopic())
         // Kafka partitions messages, messages within the same partition will
         // be delivered in order, to ensure that all messages for the same user
         // go to the same partition (and hence are delivered in order with respect
@@ -76,14 +75,43 @@ trait WorldMapService extends Service {
   }
 }
 
+case class WorldMapId(id: String) extends AnyVal
+object WorldMapId {
+  implicit val worldMapIdFormat = new Format[WorldMapId] {
+    override def writes(
+      o: WorldMapId
+    ): JsValue =
+      Json.toJson(o.id)
+    override def reads(
+      json: JsValue
+    ): JsResult[WorldMapId] =
+      json.validate(implicitly[Reads[String]]).map(apply)
+  }
+}
+
+case class PlaceId(id: String) extends AnyVal
+object PlaceId {
+  implicit val worldMapIdFormat = new Format[PlaceId] {
+    override def writes(
+      o: PlaceId
+    ): JsValue =
+      Json.toJson(o.id)
+    override def reads(
+      json: JsValue
+    ): JsResult[PlaceId] =
+      json.validate(implicitly[Reads[String]]).map(apply)
+  }
+}
+
 object WorldMapApiModel {
+
   case class Url(url: String) extends AnyVal
   case class Coordinates(latitude: String, longitude: String)
-  case class Place(id: String, description: String, coordinates: Coordinates, photoLinks: Set[Url])
-  case class WorldMap(id: String, creatorId: String, places: Set[Place])
+  case class Place(placeId: PlaceId, description: String, coordinates: Coordinates, photoLinks: Set[Url])
+  case class WorldMap(mapId: WorldMapId, creatorId: String, places: Set[Place])
 
   case class AvailableMaps(maps: Seq[String])
-  case class NewWorldMap(id: String, creatorId: String)
+  case class NewWorldMap(mapId: WorldMapId, creatorId: String, description: Option[String])
 }
 
 object WorldMapApiEvents {
@@ -92,7 +120,9 @@ object WorldMapApiEvents {
 }
 
 object WorldMapApiFormatters {
-  implicit val urlFormat: Format[Url]                 = Json.format[Url]
+
+  implicit val urlFormat: Format[Url] = Json.format[Url]
+
   implicit val coordinatesFormat: Format[Coordinates] = Json.format[Coordinates]
   implicit val placeFormat: Format[Place]             = Json.format[Place]
   implicit val worldMapFormat: Format[WorldMap]       = Json.format[WorldMap]

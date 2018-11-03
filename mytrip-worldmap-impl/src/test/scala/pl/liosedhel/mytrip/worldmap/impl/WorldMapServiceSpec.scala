@@ -35,7 +35,7 @@ class WorldMapServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfte
       val creatorId = "creator1"
       for {
         _       <- client.createWorldMap(mapId).invoke(NewWorldMap(creatorId))
-        answer  <- client.addPlace(mapId).invoke(place)
+        answer  <- client.createPlace(mapId).invoke(place)
         map1    <- client.worldMap(mapId).invoke()
         //allMaps <- client.availableMaps().invoke() // TODO: find reliable way to test this (read side is updated with some delay)
       } yield {

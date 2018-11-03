@@ -15,7 +15,7 @@ class WorldMapStreamServiceImpl(worldMapService: WorldMapService) extends WorldM
     ServiceCall[NotUsed, Source[NewPlaceOnMap, NotUsed]] { _ =>
       Future.successful(
         worldMapService
-          .placeAddedTopic()
+          .placeCreatedTopic()
           .subscribe //.withGroupId(UUID.randomUUID().toString)
           .atMostOnceSource
           .map { placeAdded =>

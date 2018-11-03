@@ -1,14 +1,13 @@
 package pl.liosedhel.mytrip.worldmap.impl
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
 import akka.Done
 import com.datastax.driver.core.{BoundStatement, PreparedStatement}
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
-
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.AvailableMaps
-import pl.liosedhel.mytrip.worldmap.impl.WorldMapEvents.WorldMapCreated
+import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate.WorldMapCreated
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class WorldMapsRepository(cassandraSession: CassandraSession) {
 
@@ -37,7 +36,7 @@ class WorldMapsRepository(cassandraSession: CassandraSession) {
   ): Future[List[BoundStatement]] = {
     insertWordlMapPreparedStatement.map { insertStatement =>
       val insertWorldMap = insertStatement.bind()
-      insertWorldMap.setString("id", worldMapCreated.id)
+      insertWorldMap.setString("id", worldMapCreated.mapId.id)
       insertWorldMap.setString("creatorId", worldMapCreated.creatorId)
       List(insertWorldMap)
     }
