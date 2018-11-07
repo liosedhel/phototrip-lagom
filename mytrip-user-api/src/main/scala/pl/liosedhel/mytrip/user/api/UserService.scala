@@ -27,7 +27,7 @@ trait UserService extends Service {
 
   override def descriptor: Descriptor = {
     import Service._
-    named("worldmap")
+    named("worldmapuser")
       .withCalls(
         pathCall("/api/world-map/:id", user _),
         pathCall("/api/user", createUser _)

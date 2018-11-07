@@ -12,4 +12,8 @@ class CommentRepository {
     val currentComments = places.getOrElse(placeId, Nil)
     places = places.updated(placeId, currentComments :+ PlaceComment(commentId, creatorId, comment, timestamp))
   }
+
+  def getComment(placeId: PlaceId): List[PlaceComment] = {
+    places(placeId)
+  }
 }

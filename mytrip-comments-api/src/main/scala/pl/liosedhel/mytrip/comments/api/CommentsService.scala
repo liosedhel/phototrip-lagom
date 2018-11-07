@@ -1,7 +1,7 @@
 package pl.liosedhel.mytrip.comments.api
 import akka.{Done, NotUsed}
-import com.lightbend.lagom.scaladsl.api.Service.pathCall
-import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceCall}
+import com.lightbend.lagom.scaladsl.api.transport.Method
+import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
 import play.api.libs.json._
 
 trait CommentsService extends Service {
@@ -14,10 +14,14 @@ trait CommentsService extends Service {
 
   override def descriptor: Descriptor = {
     import Service._
-    named("worldmap")
+    named("comments")
       .withCalls(
         pathCall("/api/world-map/place/:id/comment", addComment _),
         pathCall("/api/world-map/place/:id/comments", getComments _)
+      )
+      .withAutoAcl(true)
+      .withAcls(
+        ServiceAcl.forMethodAndPathRegex(Method.OPTIONS, "/api.*")
       )
   }
 }

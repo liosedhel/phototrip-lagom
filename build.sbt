@@ -13,7 +13,9 @@ lazy val `mytrip` = (project in file("."))
     `mytrip-worldmap-api`,
     `mytrip-worldmap-impl`,
     `mytrip-worldmapstream-api`,
-    `mytrip-worldmapstream-impl`
+    `mytrip-worldmapstream-impl`,
+    `mytrip-comments-api`,
+    `mytrip-comments-impl`
   )
 
 lazy val `mytrip-user-api` = (project in file("mytrip-user-api"))
@@ -89,4 +91,5 @@ lazy val `mytrip-comments-impl` = (project in file("mytrip-comments-impl"))
       scalaTest
     )
   )
+  .settings(lagomForkedTestSettings: _*)
   .dependsOn(`mytrip-comments-api`)
