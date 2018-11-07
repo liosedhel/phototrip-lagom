@@ -67,3 +67,26 @@ lazy val `mytrip-worldmapstream-impl` = (project in file("mytrip-worldmapstream-
     )
   )
   .dependsOn(`mytrip-worldmapstream-api`, `mytrip-worldmap-api`)
+
+lazy val `mytrip-comments-api` = (project in file("mytrip-comments-api"))
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslApi,
+      lagomScaladslPubSub,
+      filters
+    )
+  ).dependsOn(`mytrip-worldmap-api`)
+
+lazy val `mytrip-comments-impl` = (project in file("mytrip-comments-impl"))
+  .enablePlugins(LagomScala)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslApi,
+      lagomScaladslPersistenceCassandra,
+      lagomScaladslKafkaBroker,
+      lagomScaladslTestKit,
+      macwire,
+      scalaTest
+    )
+  )
+  .dependsOn(`mytrip-comments-api`)

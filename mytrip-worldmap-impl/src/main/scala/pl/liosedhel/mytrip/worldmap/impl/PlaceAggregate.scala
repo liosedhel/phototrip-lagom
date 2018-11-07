@@ -98,7 +98,7 @@ class PlaceAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {
   }
 }
 
-object PlaceSerializers extends JsonSerializerRegistry {
+object PlaceSerializerRegistry extends JsonSerializerRegistry {
   import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters.{coordinatesFormat, urlFormat}
   import PlaceAggregate._
 
