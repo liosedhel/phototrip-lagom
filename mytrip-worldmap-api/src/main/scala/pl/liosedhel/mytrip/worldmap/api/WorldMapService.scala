@@ -20,7 +20,7 @@ trait WorldMapService extends Service {
 
   def worldMap(mapId: String): ServiceCall[NotUsed, WorldMap]
 
-  def createWorldMap(): ServiceCall[NewWorldMap, Done]
+  def createWorldMap(): ServiceCall[WorldMapDetails, Done]
 
   def availableMaps(): ServiceCall[NotUsed, AvailableMaps]
 
@@ -28,7 +28,7 @@ trait WorldMapService extends Service {
 
   def addLink(placeId: String): ServiceCall[Url, Done]
 
-  def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]]
+  def placeAddedStream(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]]
 
   //topics available externally
   def worldMapCreatedTopic(): Topic[WorldMapCreated]
@@ -43,7 +43,7 @@ trait WorldMapService extends Service {
         pathCall("/api/world-map/map", createWorldMap _),
         pathCall("/api/world-map/map/:id/place", createPlace _),
         pathCall("/api/world-map/map/list/available", availableMaps _),
-        pathCall("/api/world-map/map/:id/stream/places", placeAdded _),
+        pathCall("/api/world-map/map/:id/stream/places", placeAddedStream _),
         pathCall("/api/world-map/place/:id/link", addLink _)
       )
       .withTopics(
@@ -108,10 +108,10 @@ object WorldMapApiModel {
   case class Url(url: String) extends AnyVal
   case class Coordinates(latitude: String, longitude: String)
   case class Place(placeId: PlaceId, description: String, coordinates: Coordinates, photoLinks: Set[Url])
-  case class WorldMap(mapId: WorldMapId, creatorId: String, places: Set[Place])
+  case class WorldMap(mapId: WorldMapId, creatorId: String, description: Option[String], places: Set[Place])
 
-  case class AvailableMaps(maps: Seq[String])
-  case class NewWorldMap(mapId: WorldMapId, creatorId: String, description: Option[String])
+  case class AvailableMaps(maps: Seq[WorldMapDetails])
+  case class WorldMapDetails(mapId: WorldMapId, creatorId: String, description: Option[String])
 }
 
 object WorldMapApiEvents {
@@ -127,8 +127,8 @@ object WorldMapApiFormatters {
   implicit val placeFormat: Format[Place]             = Json.format[Place]
   implicit val worldMapFormat: Format[WorldMap]       = Json.format[WorldMap]
 
+  implicit val newWorldMapFormat: Format[WorldMapDetails] = Json.format[WorldMapDetails]
   implicit val availableMapsFormat: Format[AvailableMaps] = Json.format[AvailableMaps]
-  implicit val newWorldMapFormat: Format[NewWorldMap]     = Json.format[NewWorldMap]
 
   implicit val worldMapCreatedFormat: Format[WorldMapCreated] = Json.format[WorldMapCreated]
   implicit val placeAddedFormat: Format[PlaceAdded]           = Json.format[PlaceAdded]

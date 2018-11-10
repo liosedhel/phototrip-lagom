@@ -6,12 +6,11 @@ import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
-import com.lightbend.lagom.scaladsl.persistence.cassandra.{CassandraReadSide, CassandraSession}
+import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraReadSide
 import com.lightbend.lagom.scaladsl.persistence.{EventStreamElement, PersistentEntityRegistry, ReadSide}
 import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
-import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{NewWorldMap, Place, WorldMap}
+import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{WorldMap, WorldMapDetails}
 import pl.liosedhel.mytrip.worldmap.api._
-import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate.GetWorldMap
 
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -22,7 +21,6 @@ class WorldMapServiceImpl(
   cassandraReadSide: CassandraReadSide,
   pubSub: PubSubRegistry,
   readSide: ReadSide,
-  cassandraSession: CassandraSession,
   worldMapsRepository: WorldMapsRepository,
   placesRepository: PlacesRepository
 ) extends WorldMapService {
@@ -38,21 +36,23 @@ class WorldMapServiceImpl(
 
   override def worldMap(mapId: String): ServiceCall[NotUsed, WorldMap] =
     ServiceCall { _ =>
-      val worldMapId        = WorldMapId(mapId)
-      val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](worldMapId.id)
+      val worldMapId = WorldMapId(mapId)
       for {
-        worldMap <- worldMapAggregate.ask(GetWorldMap(worldMapId))
-      } yield {
-        val places = placesRepository.getPlaces(worldMapId)
-        WorldMapApiModel.WorldMap(worldMapId, worldMap.creatorId, places)
-      }
+        worldMap <- worldMapsRepository.getMap(worldMapId)
+        places   <- placesRepository.getPlaces(worldMapId)
+      } yield WorldMapApiModel.WorldMap(worldMapId, worldMap.creatorId, worldMap.description, places)
     }
 
-  override def createWorldMap(): ServiceCall[NewWorldMap, Done] =
-    ServiceCall[NewWorldMap, Done] { worldMap =>
-      val worldMapAggregate = persistentEntityRegistry.refFor[WorldMapAggregate](worldMap.mapId.id)
+  override def createWorldMap(): ServiceCall[WorldMapDetails, Done] =
+    ServiceCall[WorldMapDetails, Done] { worldMap =>
+      val worldMapAggregate =
+        persistentEntityRegistry.refFor[WorldMapAggregate](worldMap.mapId.id)
       worldMapAggregate.ask(
-        WorldMapAggregate.CreateNewMap(worldMap.mapId, worldMap.creatorId, worldMap.description.getOrElse(""))
+        WorldMapAggregate.CreateNewMap(
+          worldMap.mapId,
+          worldMap.creatorId,
+          worldMap.description.getOrElse("")
+        )
       )
     }
 
@@ -89,8 +89,7 @@ class WorldMapServiceImpl(
   }
 
   override def availableMaps(): ServiceCall[NotUsed, WorldMapApiModel.AvailableMaps] =
-    ServiceCall { _ => worldMapsRepository.availableMaps()
-    }
+    ServiceCall { _ => worldMapsRepository.availableMaps() }
 
   override def createPlace(mapId: String): ServiceCall[WorldMapApiModel.Place, Done] =
     ServiceCall { place =>
@@ -102,11 +101,21 @@ class WorldMapServiceImpl(
       )
     }
 
-  override def placeAdded(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]] =
+  override def placeAddedStream(mapId: String): ServiceCall[NotUsed, Source[WorldMapApiModel.Place, NotUsed]] =
     ServiceCall { _ =>
       val worldMapId = WorldMapId(mapId)
-      val topic = pubSub.refFor(TopicId[PlaceAggregate.Place](worldMapId.id))
-      Future.successful(topic.subscriber.map(p => WorldMapApiModel.Place(p.id, p.description, p.coordinates, p.photoLinks)))
+      val topic      = pubSub.refFor(TopicId[PlaceAggregate.Place](worldMapId.id))
+      Future.successful(
+        topic.subscriber.map(
+          p =>
+            WorldMapApiModel.Place(
+              p.id,
+              p.description,
+              p.coordinates,
+              p.photoLinks
+          )
+        )
+      )
     }
 
   override def addLink(placeId: String): ServiceCall[WorldMapApiModel.Url, Done] =

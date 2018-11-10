@@ -85,8 +85,7 @@ class PlaceAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {
           case (AddLink(placeId, url), ctx, _) =>
             ctx.thenPersist(
               LinkAdded(placeId, url)
-            ) { _ => ctx.reply(Done)
-            }
+            ) { _ => ctx.reply(Done) }
         }
         .onEvent {
           case (LinkAdded(_, url), place: Place) =>

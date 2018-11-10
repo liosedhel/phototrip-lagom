@@ -3,7 +3,6 @@ import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{Coordinates, Url}
 import pl.liosedhel.mytrip.worldmap.api.{PlaceId, WorldMapApiModel, WorldMapId}
 import pl.liosedhel.mytrip.worldmap.impl.PlaceAggregate.{LinkAdded, PlaceCreated}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -29,10 +28,10 @@ class PlacesRepository {
     places
       .get(linkAdded.placeId)
       .map(p => p.copy(photoLinks = p.photoLinks + linkAdded.url))
-      .map(p => places + (linkAdded.placeId -> p))
+      .foreach(p => places = places + (linkAdded.placeId -> p))
   }
 
-  def getPlaces(mapId: WorldMapId): Set[WorldMapApiModel.Place] = {
+  def getPlaces(mapId: WorldMapId): Future[Set[WorldMapApiModel.Place]] = Future.successful {
     places.values
       .filter(_.mapId == mapId)
       .map(place => WorldMapApiModel.Place(place.placeId, place.description, place.coordinates, place.photoLinks))
