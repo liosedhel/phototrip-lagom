@@ -15,7 +15,9 @@ lazy val `mytrip` = (project in file("."))
     `mytrip-worldmapstream-api`,
     `mytrip-worldmapstream-impl`,
     `mytrip-comments-api`,
-    `mytrip-comments-impl`
+    `mytrip-comments-impl`,
+    `mytrip-analytics-api`,
+    `mytrip-analytics-impl`
   )
 
 lazy val `mytrip-user-api` = (project in file("mytrip-user-api"))
@@ -54,7 +56,7 @@ lazy val `mytrip-worldmapstream-api` = (project in file("mytrip-worldmapstream-a
     libraryDependencies ++= Seq(
       lagomScaladslApi
     )
-  )
+  ).dependsOn(`mytrip-worldmap-api`)
 
 lazy val `mytrip-worldmapstream-impl` = (project in file("mytrip-worldmapstream-impl"))
   .enablePlugins(LagomScala)
@@ -93,3 +95,28 @@ lazy val `mytrip-comments-impl` = (project in file("mytrip-comments-impl"))
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`mytrip-comments-api`)
+
+
+lazy val `mytrip-analytics-api` = (project in file("mytrip-analytics-api"))
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslApi,
+      lagomScaladslPubSub,
+      filters
+    )
+  ).dependsOn(`mytrip-worldmap-api`, `mytrip-user-api`, `mytrip-comments-api`)
+
+lazy val `mytrip-analytics-impl` = (project in file("mytrip-analytics-impl"))
+  .enablePlugins(LagomScala)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslApi,
+      lagomScaladslPersistenceCassandra,
+      lagomScaladslKafkaBroker,
+      lagomScaladslTestKit,
+      macwire,
+      scalaTest
+    )
+  )
+  .settings(lagomForkedTestSettings: _*)
+  .dependsOn(`mytrip-analytics-api`)

@@ -55,7 +55,7 @@ trait WorldMapService extends Service {
         // name as the partition key.
           .addProperty(
             KafkaProperties.partitionKeyStrategy,
-            PartitionKeyStrategy[WorldMapCreated](_.id)
+            PartitionKeyStrategy[WorldMapCreated](_.worldMapId.id)
           ),
         topic(WorldMapService.PLACE_ADDED, placeCreatedTopic())
         // Kafka partitions messages, messages within the same partition will
@@ -65,7 +65,7 @@ trait WorldMapService extends Service {
         // name as the partition key.
           .addProperty(
             KafkaProperties.partitionKeyStrategy,
-            PartitionKeyStrategy[PlaceAdded](_.worldMapId)
+            PartitionKeyStrategy[PlaceAdded](_.worldMapId.id)
           )
       )
       .withAutoAcl(true)
@@ -115,8 +115,8 @@ object WorldMapApiModel {
 }
 
 object WorldMapApiEvents {
-  case class WorldMapCreated(id: String, creatorId: String)
-  case class PlaceAdded(placeId: String, worldMapId: String, coordinates: Coordinates, photoLinks: Set[Url])
+  case class WorldMapCreated(worldMapId: WorldMapId, creatorId: String, description: String)
+  case class PlaceAdded(placeId: PlaceId, worldMapId: WorldMapId, coordinates: Coordinates, photoLinks: Set[Url])
 }
 
 object WorldMapApiFormatters {

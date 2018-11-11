@@ -68,7 +68,7 @@ class WorldMapServiceImpl(
     ev: EventStreamElement[WorldMapAggregate.WorldMapEvent]
   ): immutable.Seq[(WorldMapApiEvents.WorldMapCreated, Offset)] = ev match {
     case EventStreamElement(_, w: WorldMapAggregate.WorldMapCreated, offset) =>
-      immutable.Seq((WorldMapApiEvents.WorldMapCreated(w.mapId.id, w.creatorId), offset))
+      immutable.Seq((WorldMapApiEvents.WorldMapCreated(w.mapId, w.creatorId, w.description), offset))
     case _ => Nil
   }
 
@@ -84,7 +84,7 @@ class WorldMapServiceImpl(
     ev: EventStreamElement[PlaceAggregate.PlaceEvent]
   ): immutable.Seq[(WorldMapApiEvents.PlaceAdded, Offset)] = ev match {
     case EventStreamElement(_, p: PlaceAggregate.PlaceCreated, offset) =>
-      immutable.Seq((WorldMapApiEvents.PlaceAdded(p.placeId.id, p.mapId.id, p.coordinates, p.photoLinks), offset))
+      immutable.Seq((WorldMapApiEvents.PlaceAdded(p.placeId, p.mapId, p.coordinates, p.photoLinks), offset))
     case _ => Nil
   }
 
