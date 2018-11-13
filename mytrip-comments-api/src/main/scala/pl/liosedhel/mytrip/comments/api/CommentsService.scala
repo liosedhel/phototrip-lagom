@@ -39,7 +39,7 @@ object CommentId {
       json.validate(implicitly[Reads[String]]).map(apply)
   }
 }
-case class PlaceComment(commentId: CommentId, comment: String, creatorId: String, timestamp: Long)
+case class PlaceComment(commentId: CommentId, creatorId: String, comment: String, timestamp: Long)
 
 object CommentFormatters {
   implicit val placeCommentFormat: Format[PlaceComment] = Json.format[PlaceComment]

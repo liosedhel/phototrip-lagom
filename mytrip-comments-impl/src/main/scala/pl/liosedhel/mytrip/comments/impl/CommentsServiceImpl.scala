@@ -19,7 +19,7 @@ class CommentsServiceImpl(
 
   override def addComment(placeId: String): ServiceCall[PlaceComment, Done] =
     ServiceCall[PlaceComment, Done] { placeComment =>
-      val commentAggregate = persistentEntityRegistry.refFor[PlaceCommentAggregate](placeId)
+      val commentAggregate = persistentEntityRegistry.refFor[PlaceCommentAggregate](placeComment.commentId.id)
       commentAggregate.ask(
         PlaceCommentAggregate
           .CreateComment(placeComment.commentId, PlaceId(placeId), placeComment.creatorId, placeComment.comment)

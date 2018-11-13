@@ -20,8 +20,8 @@ class AnalyticsServiceImpl(
     .subscribe
     .withGroupId(UUID.randomUUID().toString) //TODO: demonstration only, just to fully restore in memory repository
     .atLeastOnce(
-      Flow[PlaceAdded].map { msg =>
-        analyticsRepository.save(msg)
+      Flow[PlaceAdded].map { placeAdded =>
+        analyticsRepository.save(placeAdded)
         Done
       }
     )
@@ -31,17 +31,15 @@ class AnalyticsServiceImpl(
     .subscribe
     .withGroupId(UUID.randomUUID().toString) //TODO: demonstration only, just to fully restore in memory repository
     .atLeastOnce(
-    Flow[WorldMapCreated].map { msg =>
-      analyticsRepository.save(msg)
-      Done
-    }
-  )
+      Flow[WorldMapCreated].map { worldMapCreated =>
+        analyticsRepository.save(worldMapCreated)
+        Done
+      }
+    )
 
   override def getStats(): ServiceCall[NotUsed, Stats] = {
-    ServiceCall[NotUsed, Stats] { _ =>
-      Future.successful(analyticsRepository.getStats())
+    ServiceCall[NotUsed, Stats] { _ => Future.successful(analyticsRepository.getStats())
     }
   }
-
 
 }

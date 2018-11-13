@@ -64,7 +64,8 @@ class PlaceCommentAggregate extends PersistentEntity {
           case (CreateComment(commentId, placeId, creatorId, comment, timestamp), ctx, _) =>
             ctx.thenPersist(
               CommentCreated(commentId, placeId, creatorId, comment, timestamp)
-            ) { _ => ctx.reply(Done)
+            ) {
+              _ => ctx.reply(Done)
             }
         }
         .onReadOnlyCommand[GetComment, PlaceComment] {
