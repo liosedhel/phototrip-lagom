@@ -4,6 +4,7 @@ import akka.Done
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
 import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventTag, PersistentEntity}
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
+import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
 import pl.liosedhel.mytrip.comments.api.CommentId
 import pl.liosedhel.mytrip.worldmap.api.PlaceId
 import play.api.libs.json.Json
@@ -49,7 +50,7 @@ object PlaceCommentAggregate {
   ) extends PlaceCommentEvent
 }
 
-class PlaceCommentAggregate extends PersistentEntity {
+class PlaceCommentAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {
   import PlaceCommentAggregate._
 
   override type Command = PlaceCommentCommand[_]
@@ -74,7 +75,10 @@ class PlaceCommentAggregate extends PersistentEntity {
         }
         .onEvent {
           case (CommentCreated(commentId, placeId, creatorId, comment, timestamp), _) =>
-            PlaceComment(commentId, placeId, creatorId, comment, timestamp)
+            val c = PlaceComment(commentId, placeId, creatorId, comment, timestamp)
+            val topic = pubSubRegistry.refFor(TopicId[PlaceComment](placeId.id))
+            topic.publish(c)
+            c
         }
 
     case _: PlaceComment =>

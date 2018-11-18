@@ -21,6 +21,7 @@ class WorldMapStreamServiceImpl(worldMapService: WorldMapService) extends WorldM
           .map { placeAdded =>
             NewPlaceOnMap(
               placeAdded.placeId,
+              placeAdded.description,
               Coordinates(placeAdded.coordinates.latitude, placeAdded.coordinates.longitude),
               placeAdded.photoLinks.map(link => Url(link.url))
             )

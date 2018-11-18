@@ -84,12 +84,16 @@ class WorldMapServiceImpl(
     ev: EventStreamElement[PlaceAggregate.PlaceEvent]
   ): immutable.Seq[(WorldMapApiEvents.PlaceAdded, Offset)] = ev match {
     case EventStreamElement(_, p: PlaceAggregate.PlaceCreated, offset) =>
-      immutable.Seq((WorldMapApiEvents.PlaceAdded(p.placeId, p.mapId, p.coordinates, p.photoLinks), offset))
+      immutable.Seq(
+        (WorldMapApiEvents.PlaceAdded(p.placeId, p.mapId, p.description, p.coordinates, p.photoLinks), offset)
+      )
     case _ => Nil
   }
 
   override def availableMaps(): ServiceCall[NotUsed, WorldMapApiModel.AvailableMaps] =
-    ServiceCall { _ => worldMapsRepository.availableMaps() }
+    ServiceCall { _ =>
+      worldMapsRepository.availableMaps()
+    }
 
   override def createPlace(mapId: String): ServiceCall[WorldMapApiModel.Place, Done] =
     ServiceCall { place =>

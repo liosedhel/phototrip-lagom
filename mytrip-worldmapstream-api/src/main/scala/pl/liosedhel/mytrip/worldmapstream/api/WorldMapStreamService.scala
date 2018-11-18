@@ -26,7 +26,7 @@ trait WorldMapStreamService extends Service {
 
 case class Url(url: String) extends AnyVal
 case class Coordinates(latitude: String, longitude: String)
-case class NewPlaceOnMap(id: PlaceId, coordinates: Coordinates, photoLinks: Set[Url])
+case class NewPlaceOnMap(id: PlaceId, description: String, coordinates: Coordinates, photoLinks: Set[Url])
 
 object JsonFormatters {
   implicit val urlFormat: Format[Url]                     = Json.format[Url]

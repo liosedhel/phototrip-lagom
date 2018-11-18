@@ -1,4 +1,5 @@
 package pl.liosedhel.mytrip.comments.api
+import akka.stream.scaladsl.Source
 import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
@@ -12,12 +13,15 @@ trait CommentsService extends Service {
 
   def getComments(placeId: String): ServiceCall[NotUsed, List[PlaceComment]]
 
+  def getCommentsStream(placeId: String): ServiceCall[NotUsed, Source[PlaceComment, NotUsed]]
+
   override def descriptor: Descriptor = {
     import Service._
     named("comments")
       .withCalls(
         pathCall("/api/world-map/place/:id/comment", addComment _),
-        pathCall("/api/world-map/place/:id/comments", getComments _)
+        pathCall("/api/world-map/place/:id/comments", getComments _),
+        pathCall("/api/world-map/place/:id/stream/comments", getCommentsStream _)
       )
       .withAutoAcl(true)
       .withAcls(

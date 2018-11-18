@@ -37,9 +37,9 @@ class AnalyticsServiceImpl(
       }
     )
 
-  override def getStats(): ServiceCall[NotUsed, Stats] = {
-    ServiceCall[NotUsed, Stats] { _ => Future.successful(analyticsRepository.getStats())
+  override def getStats(): ServiceCall[NotUsed, Stats] =
+    ServiceCall[NotUsed, Stats] { _ =>
+      Future.successful(analyticsRepository.getStats())
     }
-  }
 
 }
