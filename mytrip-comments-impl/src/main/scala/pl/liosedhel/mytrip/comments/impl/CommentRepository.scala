@@ -14,6 +14,6 @@ class CommentRepository {
   }
 
   def getComment(placeId: PlaceId): List[PlaceComment] = {
-    places(placeId)
+    places.getOrElse(placeId, Nil)
   }
 }
