@@ -5,8 +5,7 @@ import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
-import play.api.libs.json.{Format, Json}
-
+import play.api.libs.json._
 import pl.liosedhel.mytrip.user.api.UserApiEvents.UserCreated
 import pl.liosedhel.mytrip.user.api.UserApiFormatters._
 import pl.liosedhel.mytrip.user.api.UserApiModel._
@@ -41,7 +40,7 @@ trait UserService extends Service {
         // name as the partition key.
           .addProperty(
             KafkaProperties.partitionKeyStrategy,
-            PartitionKeyStrategy[UserCreated](_.id)
+            PartitionKeyStrategy[UserCreated](_.id.id)
           )
       )
       .withAutoAcl(true)
@@ -51,12 +50,27 @@ trait UserService extends Service {
   }
 }
 
+case class UserId(id: String)
+object UserId {
+  implicit val worldMapIdFormat = new Format[UserId] {
+    override def writes(
+      o: UserId
+    ): JsValue =
+      Json.toJson(o.id)
+    override def reads(
+      json: JsValue
+    ): JsResult[UserId] =
+      json.validate(implicitly[Reads[String]]).map(apply)
+  }
+}
+
 object UserApiModel {
-  case class User(id: String, email: String)
+
+  case class User(id: UserId, email: String)
 }
 
 object UserApiEvents {
-  case class UserCreated(id: String, email: String)
+  case class UserCreated(id: UserId, email: String)
 }
 
 object UserApiFormatters {

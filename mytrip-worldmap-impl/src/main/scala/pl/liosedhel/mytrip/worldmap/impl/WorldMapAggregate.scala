@@ -5,6 +5,7 @@ import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
 import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventTag, PersistentEntity}
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
 import com.lightbend.lagom.scaladsl.pubsub.PubSubRegistry
+import pl.liosedhel.mytrip.user.api.UserId
 import pl.liosedhel.mytrip.worldmap.api.WorldMapId
 import play.api.libs.json.Json
 
@@ -13,10 +14,10 @@ import scala.collection.immutable.Seq
 object WorldMapAggregate {
   sealed trait WorldMapState
   case object UninitializedWordMap                                            extends WorldMapState
-  case class WorldMap(id: WorldMapId, creatorId: String, description: String) extends WorldMapState
+  case class WorldMap(id: WorldMapId, creatorId: UserId, description: String) extends WorldMapState
 
   sealed trait WorldMapCommand[R]                                                    extends ReplyType[R]
-  case class CreateNewMap(mapId: WorldMapId, creatorId: String, description: String) extends WorldMapCommand[Done]
+  case class CreateNewMap(mapId: WorldMapId, creatorId: UserId, description: String) extends WorldMapCommand[Done]
 
   case class GetWorldMap(mapId: WorldMapId) extends WorldMapCommand[WorldMap]
 
@@ -27,7 +28,7 @@ object WorldMapAggregate {
     def aggregateTag: AggregateEventTag[WorldMapEvent] = WorldMapEvent.Tag
   }
 
-  case class WorldMapCreated(mapId: WorldMapId, creatorId: String, description: String) extends WorldMapEvent
+  case class WorldMapCreated(mapId: WorldMapId, creatorId: UserId, description: String) extends WorldMapEvent
 }
 
 class WorldMapAggregate(pubSubRegistry: PubSubRegistry) extends PersistentEntity {

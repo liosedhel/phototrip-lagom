@@ -12,3 +12,6 @@ bin
 .settings
 logs
 .idea
+.bloop
+.metals
+codemr

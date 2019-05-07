@@ -6,6 +6,7 @@ import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
+import pl.liosedhel.mytrip.user.api.UserId
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiEvents.{PlaceAdded, WorldMapCreated}
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiFormatters._
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel._
@@ -108,14 +109,14 @@ object WorldMapApiModel {
   case class Url(url: String) extends AnyVal
   case class Coordinates(latitude: String, longitude: String)
   case class Place(placeId: PlaceId, description: String, coordinates: Coordinates, photoLinks: Set[Url])
-  case class WorldMap(mapId: WorldMapId, creatorId: String, description: Option[String], places: Set[Place])
+  case class WorldMap(mapId: WorldMapId, creatorId: UserId, description: Option[String], places: Set[Place])
 
   case class AvailableMaps(maps: Seq[WorldMapDetails])
-  case class WorldMapDetails(mapId: WorldMapId, creatorId: String, description: Option[String])
+  case class WorldMapDetails(mapId: WorldMapId, creatorId: UserId, description: Option[String])
 }
 
 object WorldMapApiEvents {
-  case class WorldMapCreated(worldMapId: WorldMapId, creatorId: String, description: String)
+  case class WorldMapCreated(worldMapId: WorldMapId, creatorId: UserId, description: String)
   case class PlaceAdded(placeId: PlaceId, worldMapId: WorldMapId, description: String, coordinates: Coordinates, photoLinks: Set[Url])
 }
 

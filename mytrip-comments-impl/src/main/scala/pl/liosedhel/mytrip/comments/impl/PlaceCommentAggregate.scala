@@ -6,6 +6,7 @@ import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventT
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
 import com.lightbend.lagom.scaladsl.pubsub.{PubSubRegistry, TopicId}
 import pl.liosedhel.mytrip.comments.api.CommentId
+import pl.liosedhel.mytrip.user.api.UserId
 import pl.liosedhel.mytrip.worldmap.api.PlaceId
 import play.api.libs.json.Json
 
@@ -18,7 +19,7 @@ object PlaceCommentAggregate {
   case class PlaceComment(
     commentId: CommentId,
     placeId: PlaceId,
-    creatorId: String,
+    creatorId: UserId,
     comment: String,
     timestamp: Long
   ) extends PlaceCommentState
@@ -27,7 +28,7 @@ object PlaceCommentAggregate {
   case class CreateComment(
     commentId: CommentId,
     placeId: PlaceId,
-    creatorId: String,
+    creatorId: UserId,
     comment: String,
     timestamp: Long = System.currentTimeMillis()
   ) extends PlaceCommentCommand[Done]
@@ -44,7 +45,7 @@ object PlaceCommentAggregate {
   case class CommentCreated(
     commentId: CommentId,
     placeId: PlaceId,
-    creatorId: String,
+    creatorId: UserId,
     comment: String,
     timestamp: Long = System.currentTimeMillis()
   ) extends PlaceCommentEvent

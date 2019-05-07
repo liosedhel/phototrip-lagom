@@ -4,6 +4,7 @@ import akka.Done
 import com.datastax.driver.core.{BoundStatement, PreparedStatement}
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
 import org.slf4j.{Logger, LoggerFactory}
+import pl.liosedhel.mytrip.user.api.UserId
 import pl.liosedhel.mytrip.worldmap.api.WorldMapApiModel.{AvailableMaps, WorldMapDetails}
 import pl.liosedhel.mytrip.worldmap.api.{WorldMapApiModel, WorldMapId}
 import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate.WorldMapCreated
@@ -32,7 +33,7 @@ class WorldMapsRepository(cassandraSession: CassandraSession) {
       WorldMapApiModel.AvailableMaps(result.map { m =>
         WorldMapApiModel.WorldMapDetails(
           mapId = WorldMapId(m.getString("id")),
-          creatorId = m.getString("creatorId"),
+          creatorId = UserId(m.getString("creatorId")),
           description = Option(m.getString("description"))
         )
       })
@@ -47,7 +48,7 @@ class WorldMapsRepository(cassandraSession: CassandraSession) {
         .map { m =>
           WorldMapApiModel.WorldMapDetails(
             mapId = WorldMapId(m.getString("id")),
-            creatorId = m.getString("creatorId"),
+            creatorId = UserId(m.getString("creatorId")),
             description = Option(m.getString("description"))
           )
         }
@@ -74,7 +75,7 @@ class WorldMapsRepository(cassandraSession: CassandraSession) {
     insertWordlMapPreparedStatement.map { insertStatement =>
       val insertWorldMap = insertStatement.bind()
       insertWorldMap.setString("id", worldMapCreated.mapId.id)
-      insertWorldMap.setString("creatorId", worldMapCreated.creatorId)
+      insertWorldMap.setString("creatorId", worldMapCreated.creatorId.id)
       insertWorldMap.setString("description", worldMapCreated.description)
       List(insertWorldMap)
     }

@@ -3,6 +3,7 @@ import akka.stream.scaladsl.Source
 import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceAcl, ServiceCall}
+import pl.liosedhel.mytrip.user.api.UserId
 import play.api.libs.json._
 
 trait CommentsService extends Service {
@@ -43,7 +44,7 @@ object CommentId {
       json.validate(implicitly[Reads[String]]).map(apply)
   }
 }
-case class PlaceComment(commentId: CommentId, creatorId: String, comment: String, timestamp: Long)
+case class PlaceComment(commentId: CommentId, creatorId: UserId, comment: String, timestamp: Long)
 
 object CommentFormatters {
   implicit val placeCommentFormat: Format[PlaceComment] = Json.format[PlaceComment]
