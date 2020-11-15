@@ -15,3 +15,7 @@ logs
 .bloop
 .metals
 codemr
+
+.vscode
+.bsp
+.semanticgraphs

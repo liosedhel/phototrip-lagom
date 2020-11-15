@@ -2,16 +2,15 @@ organization in ThisBuild := "pl.liosedhel"
 version in ThisBuild := "1.0-SNAPSHOT"
 
 // the Scala version that will be used for cross-compiled libraries
-scalaVersion in ThisBuild := "2.12.8"
+scalaVersion in ThisBuild := "2.13.3"
 
 autoCompilerPlugins := true
 
 scalacOptions += "-Yrangepos"
+scalacOptions += "-deprecation"
 
-val macwire   = "com.softwaremill.macwire" %% "macros"    % "2.3.2" % "provided"
-val scalaTest = "org.scalatest"            %% "scalatest" % "3.0.7" % Test
-
-libraryDependencies in ThisBuild += compilerPlugin("org.scalameta" % "semanticdb-scalac" % "4.1.9" cross CrossVersion.full)
+val macwire   = "com.softwaremill.macwire" %% "macros"    % "2.3.7" % "provided"
+val scalaTest = "org.scalatest"            %% "scalatest" % "3.2.3" % Test
 
 lazy val `mytrip` = (project in file("."))
   .aggregate(

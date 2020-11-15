@@ -19,31 +19,38 @@ import pl.liosedhel.mytrip.worldmap.api.WorldMapId
 import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate.WorldMapCreated
 import pl.liosedhel.mytrip.worldmap.impl.PlaceAggregate.CreateNewPlace
 import pl.liosedhel.mytrip.worldmap.api.PlaceId
-import pl.liosedhel.mytrip.worldmap.impl.WorldMapAggregate.WorldMapState
+import pl.liosedhel.mytrip.worldmap.impl.PlaceAggregate.PlaceCommand
+import pl.liosedhel.mytrip.worldmap.impl.PlaceAggregate.PlaceEvent
+import pl.liosedhel.mytrip.worldmap.impl.PlaceAggregate.PlaceState
+import pl.liosedhel.mytrip.worldmap.api.WorldMapApiEvents.PlaceAdded
 
-class WorldMapAggregateSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
+class PlaceAggregateSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   private val system =
-    ActorSystem("WolrdMapAggreateSpec", JsonSerializerRegistry.actorSystemSetupFor(WorldMapSerializerRegistry))
+    ActorSystem("PlaceAggreagateSpec", JsonSerializerRegistry.actorSystemSetupFor(WorldMapSerializerRegistry))
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
   private def withTestDriver(entityId: WorldMapId)(
-    block: WorldMapId => PersistentEntityTestDriver[WorldMapCommand[_], WorldMapEvent, WorldMapState] => Unit
+    block: WorldMapId => PersistentEntityTestDriver[PlaceCommand[_], PlaceEvent, PlaceState] => Unit
   ): Unit = {
-    val driver = new PersistentEntityTestDriver(system, new WorldMapAggregate(null), entityId.id)
+    val driver = new PersistentEntityTestDriver(system, new PlaceAggregate(null), entityId.id)
     block(entityId)(driver)
     driver.getAllIssues should have size 0
   }
 
-  "world map aggregate" should {
+  "place aggreagate should" should {
 
-    "create even empty map" in withTestDriver(WorldMapId("mapId1")) { mapId => driver =>
-      val creatorId = UserId("creatorId")
-      val outcome   = driver.run(CreateNewMap(mapId, creatorId, "description"))
-      outcome.replies should contain only Done
-      outcome.events should contain only WorldMapCreated(mapId, creatorId, "description")
+    "allow adding new places" in withTestDriver(WorldMapId(("mapId2"))) { mapId => driver =>
+      val coordinates = Coordinates("15", "15")
+      val urls        = Set(Url("Url"))
+
+      val placeId  = PlaceId("placeId")
+      val outcome2 = driver.run(CreateNewPlace(placeId, mapId, "description", coordinates, urls))
+      println(outcome2.replies)
+      //outcome2.replies should contain only Done
+      outcome2.events should contain only PlaceAdded(placeId, mapId, "description", coordinates, urls)
     }
 
   }
